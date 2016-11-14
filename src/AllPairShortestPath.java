@@ -10,9 +10,10 @@ class AllPairShortestPath
 {
 	private int dist[][];
 	private int pred[][];
-	private static int flow[][];
+	private int flow[][];
     final static int INF = 99999;
     private int V;
+    private ArrayList tflow = new ArrayList();
  
     void floydWarshall(int graph[][])
     {
@@ -28,7 +29,10 @@ class AllPairShortestPath
            vertex. */
         for (i = 0; i < V; i++)
             for (j = 0; j < V; j++){
+            	if (graph[i][j] != 0)
                 dist[i][j] = graph[i][j];
+            	else if (i != j)
+            	dist[i][j] = INF;
                 flow[i][j] = 0;
         		if (i != j)
         			pred[i][j] = i+1;
@@ -118,29 +122,78 @@ class AllPairShortestPath
     	}
     	printSolution(flow);
     }
+    
+    int[][] parseInput(String filename){
+
+    	File file = new File(filename);
+    	BufferedReader reader = null;
+    	int start = 0;
+    	int end = 0;
+    	int weight = 0;
+    	boolean edge;
+    	String ed = null;
+    	int graph[][] = new int[6][6];
+    	try {
+    	    reader = new BufferedReader(new FileReader(file));
+    	    String text = null;
+
+    	    while ((text = reader.readLine()) != null) {
+
+    	    	String[] line = text.split(",");
+    	    	if (line.length == 4){
+    	    		ed = line[0].trim();
+    	    		start = Integer.parseInt(line[1].trim())-1;
+    	    		end = Integer.parseInt(line[2].trim())-1;
+    	    		weight = Integer.parseInt(line[3].trim());
+    	    	}
+        	    if (ed != null && ed.equals("E")){
+        	    	graph[start][end] = weight;
+        	    }
+        	    else if (ed != null && ed.equals("F")){
+        	    	Paths temp = new Paths(start, end, weight);
+        	    	tflow.add(temp);
+        	    }
+    	    }
+    	    
+
+    	} catch (FileNotFoundException e) {
+    	    e.printStackTrace();
+    	} catch (IOException e) {
+    	    e.printStackTrace();
+    	} finally {
+    	    try {
+    	        if (reader != null) {
+    	            reader.close();
+    	        }
+    	    } catch (IOException e) {
+    	    }
+    	}
+    	return graph;
+    }
+    void printflow(){
+    	printSolution(flow);
+    }
  
 
 	public static void main(String[] args) {
-		
+		/*
         int graph[][] = { {0,   INF,  3, INF, INF},
                           {4, 0,   INF, 1, 2},
                           {3, 8, 0, 2, 6},
                           {INF, 1, INF, 0, 4},
                           {INF, 1, 6, 4, 0}
                         };
-        
+        */
         ArrayList testFlow = new ArrayList();
-        Paths path1 = new Paths(4,3,90);
-        testFlow.add(path1);
         AllPairShortestPath a = new AllPairShortestPath();
- 
+        int graph[][] = a.parseInput("sneakypathinput.txt");
         // Print the solution
         a.floydWarshall(graph);
         System.out.println("shortest path is as follows:  ");
-        ArrayList thePath = a.giveMeThePath(4, 3);
+        ArrayList thePath = a.giveMeThePath(1, 5);
         System.out.println(Arrays.toString(thePath.toArray()));
         a.parseFlowList(testFlow);
-        
+        a.printflow();
         
         
 	}
