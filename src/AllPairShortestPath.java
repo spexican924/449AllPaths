@@ -11,6 +11,7 @@ class AllPairShortestPath
 	private int dist[][];
 	private int pred[][];
 	private static int flow[][];
+	private static int linked[][];
     final static int INF = 99999;
     private int V;
     private ArrayList<Paths> tflow = new ArrayList<Paths>();
@@ -30,9 +31,11 @@ class AllPairShortestPath
         for (i = 0; i < V; i++)
             for (j = 0; j < V; j++){
             	if (graph[i][j] != 0)
-                dist[i][j] = graph[i][j];
-            	else if (i != j)
-            	dist[i][j] = INF;
+            		dist[i][j] = graph[i][j];
+            	else if (i != j && linked[i][j] == 0)
+            		dist[i][j] = INF;
+            	else
+            		dist[i][j] = 0;
                 flow[i][j] = 0;
         		if (i != j)
         			pred[i][j] = i+1;
@@ -169,12 +172,22 @@ class AllPairShortestPath
     	    } catch (IOException e) {
     	    }
     	}
+    	linked = new int [graph.length][graph.length];
+    	for (int i = 0; i < graph.length; i++){
+    		for (int j = 0; j < graph.length; j++){
+    			if (graph[i][j] != 0)
+    				linked[i][j] = 1;
+    		}
+    	}
     	return graph;
     }
     void printflow(){
     	printSolution(flow);
     }
- 
+    
+    void pathmatrix(int[][] input){
+    	
+    } 
 
 	public static void main(String[] args) {
 		/*
@@ -196,7 +209,8 @@ class AllPairShortestPath
         a.parseFlowList();
         a.printflow();
         a.floydWarshall(flow);
-        thePath = a.giveMeThePath(6, 1);
+        thePath = a.giveMeThePath(2, 6);
         System.out.println(Arrays.toString(thePath.toArray()));
+        a.printSolution(linked);
 	}
 }
