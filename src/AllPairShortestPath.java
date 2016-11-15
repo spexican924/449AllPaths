@@ -10,10 +10,10 @@ class AllPairShortestPath
 {
 	private int dist[][];
 	private int pred[][];
-	private int flow[][];
+	private static int flow[][];
     final static int INF = 99999;
     private int V;
-    private ArrayList tflow = new ArrayList();
+    private ArrayList<Paths> tflow = new ArrayList<Paths>();
  
     void floydWarshall(int graph[][])
     {
@@ -114,10 +114,10 @@ class AllPairShortestPath
     	}
     }
     
-    void parseFlowList(List<Paths> otherCars){
+    void parseFlowList(){
     	List hereIsThePath;
-    	for (Paths current : otherCars){
-    		hereIsThePath = giveMeThePath(current.begin, current.end);
+    	for (Paths current : tflow){
+    		hereIsThePath = giveMeThePath(current.begin+1, current.end+1);
     		makeAdjacencyMatrix(hereIsThePath, current.flow);
     	}
     	printSolution(flow);
@@ -138,7 +138,7 @@ class AllPairShortestPath
     	    String text = null;
 
     	    while ((text = reader.readLine()) != null) {
-
+    	    	if (!text.equals("")){
     	    	String[] line = text.split(",");
     	    	if (line.length == 4){
     	    		ed = line[0].trim();
@@ -153,6 +153,7 @@ class AllPairShortestPath
         	    	Paths temp = new Paths(start, end, weight);
         	    	tflow.add(temp);
         	    }
+    	    }
     	    }
     	    
 
@@ -190,11 +191,12 @@ class AllPairShortestPath
         // Print the solution
         a.floydWarshall(graph);
         System.out.println("shortest path is as follows:  ");
-        ArrayList thePath = a.giveMeThePath(1, 5);
+        ArrayList thePath = a.giveMeThePath(6, 1);
         System.out.println(Arrays.toString(thePath.toArray()));
-        a.parseFlowList(testFlow);
+        a.parseFlowList();
         a.printflow();
-        
-        
+        a.floydWarshall(flow);
+        thePath = a.giveMeThePath(6, 1);
+        System.out.println(Arrays.toString(thePath.toArray()));
 	}
 }
