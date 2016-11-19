@@ -12,16 +12,17 @@ class AllPairShortestPath
 	private int pred[][];
 	private static int flow[][];
 	private static int linked[][];
+	private int minflow[][];
+	private int maxflow[][];
+	private int avgflow[][];
+	private String pathMatrix[][];
     final static int INF = 99999;
-    private int V;
+    private int V = 1000;
     private ArrayList<Paths> tflow = new ArrayList<Paths>();
- 
+    private int sneakyStart,sneakyEnd; 
     void floydWarshall(int graph[][])
     {
-    	V = graph.length;
-        dist = new int[V][V];
-        pred = new int[V][V];
-        flow = new int[V][V];
+
         int i, j, k;
  
         /* Initialize the solution matrix same as input graph matrix.
@@ -130,16 +131,38 @@ class AllPairShortestPath
 
     	File file = new File(filename);
     	BufferedReader reader = null;
-    	int start = 0;
-    	int end = 0;
+    	int start = 1;
+    	int end = 2;
     	int weight = 0;
     	boolean edge;
     	String ed = null;
-    	int graph[][] = new int[6][6];
+    	int graph[][];
     	try {
     	    reader = new BufferedReader(new FileReader(file));
     	    String text = null;
-
+    	    int linecount = 0;
+    	    while ((text = reader.readLine()) != null){
+    	    	String[] line = text.split(",");
+    	    	if (line.length == 3){
+    	    		V = Integer.parseInt(line[0].trim());
+    	    		sneakyStart = Integer.parseInt(line[1].trim())-1;
+    	    		sneakyEnd = Integer.parseInt(line[2].trim())-1;
+    	    		// if the parameters were not at the top of the file, close and reopen to return to the beginning
+    	    		if (linecount != 0){
+    	    			reader.close();
+    	    			reader = new BufferedReader(new FileReader(file));
+    	    	}
+    	    	break;
+    	    	}
+    	    	linecount++;
+    	    }
+    	}
+    	    catch(Exception e){
+    	    	e.printStackTrace();
+    	    }
+    	    graph = new int [V][V];
+    	    try{
+        	    String text = null;
     	    while ((text = reader.readLine()) != null) {
     	    	if (!text.equals("")){
     	    	String[] line = text.split(",");
@@ -179,14 +202,40 @@ class AllPairShortestPath
     				linked[i][j] = 1;
     		}
     	}
+        dist = new int[V][V];
+        pred = new int[V][V];
+        flow = new int[V][V];
+        minflow = new int[V][V];
+    	maxflow = new int[V][V];
+    	avgflow = new int[V][V];
+    	pathMatrix = new String [V][V];
     	return graph;
     }
     void printflow(){
     	printSolution(flow);
     }
     
-    void pathmatrix(int[][] input){
-    	
+    void generateOutput(int[][] input, int[][] predessor){
+    	int max, min, count;
+    	String path = "";
+    	String pathCorrect;
+    	for (int i = 0; i < input.length; i++){
+    		for (int j = 0; j < input.length; j++){
+    			if (i == j)
+    				pathMatrix[i][j] = Integer.toString(input[i][j]);
+    			else{
+    		    	int current = j-1;
+    		    	int begin = i -1;
+    		    	path += j + ", ";
+    		    	while (pred[begin][current] != i){
+    		    		current = pred[begin][current]-1;
+    		    		path += current + ", "; 
+    		    	}
+    		    	path += i;
+    			}
+    			pathCorrect = new StringBuilder(path).reverse().toString();
+    		}
+    	}
     } 
 
 	public static void main(String[] args) {
@@ -209,8 +258,8 @@ class AllPairShortestPath
         a.parseFlowList();
         a.printflow();
         a.floydWarshall(flow);
-        thePath = a.giveMeThePath(2, 6);
+        thePath = a.giveMeThePath(2, 1);
         System.out.println(Arrays.toString(thePath.toArray()));
-        a.printSolution(linked);
+
 	}
 }
