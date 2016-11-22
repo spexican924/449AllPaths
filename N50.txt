@@ -1,0 +1,13 @@
+Calculating sneaky path from 2 to 49.
+
+Here is that sneakypath.
+[2, 7, 13, 19, 25, 31, 37, 43, 49]
+
+The edge with the lowest number of other cars in the sneaky path is.
+0
+
+The edge with the highest number of other cars in the sneaky path is.
+0
+
+The average number of other cars on the sneaky path is.
+0.0

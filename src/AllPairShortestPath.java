@@ -9,17 +9,21 @@ import java.io.*;
 class AllPairShortestPath
 {
 	private int dist[][];
-	private int pred[][];
+	private static int pred[][];
 	private static int flow[][];
 	private static int linked[][];
-	private int minflow[][];
-	private int maxflow[][];
-	private int avgflow[][];
-	private String pathMatrix[][];
+	private static int minflow[][];
+	private static int maxflow[][];
+	private static double avgflow[][];
+	private static String pathMatrix[][];
     final static int INF = 99999;
-    private int V = 1000;
+    private int V;
     private ArrayList<Paths> tflow = new ArrayList<Paths>();
-    private int sneakyStart,sneakyEnd; 
+    private static int sneakyStart;
+	private static int sneakyEnd; 
+	private static String fileExtension = new String("N75"); 
+	private static Stack pathStack;
+	
     void floydWarshall(int graph[][])
     {
 
@@ -38,7 +42,7 @@ class AllPairShortestPath
             	else
             		dist[i][j] = 0;
                 flow[i][j] = 0;
-        		if (i != j)
+        		//if (i != j)
         			pred[i][j] = i+1;
             }
 
@@ -74,38 +78,38 @@ class AllPairShortestPath
         }
  
         // Print the shortest distance matrix
-        printSolution(dist);
-        printSolution(pred);
+        //printSolution(dist);
+        //printSolution(pred);
     }
  
-    void printSolution(int matr[][])
+    void printSolution(int matr[][], PrintWriter writer)
     {
-        System.out.println("Following matrix shows the shortest "+
+        writer.println("Following matrix shows the shortest "+
                          "distances between every pair of vertices");
         for (int i=0; i<V; ++i)
         {
             for (int j=0; j<V; ++j)
             {
                 if (matr[i][j]==INF)
-                    System.out.print("INF ");
+                    writer.print("INF ");
                 else
-                    System.out.print(matr[i][j]+"   ");
+                    writer.print(matr[i][j]+"   ");
             }
-            System.out.println();
+            writer.println();
         }
     }
     
-    ArrayList giveMeThePath(int start, int end){
+    Stack giveMeThePath(int start, int end){
     	int current = end-1;
     	int begin = start -1;
-    	ArrayList path = new ArrayList();
-    	path.add(end);
+    	Stack pathStack = new Stack();
+    	pathStack.push(end);
     	while (pred[begin][current] != start){
     		current = pred[begin][current]-1;
-    		path.add(current+1);
+    		pathStack.push(current+1);
     	}
-    	path.add(start);
-		return path;
+    	pathStack.push(start);	
+		return pathStack;
     }
     
     void makeAdjacencyMatrix(List<Integer> path, int edgeFlow){
@@ -124,11 +128,11 @@ class AllPairShortestPath
     		hereIsThePath = giveMeThePath(current.begin+1, current.end+1);
     		makeAdjacencyMatrix(hereIsThePath, current.flow);
     	}
-    	printSolution(flow);
+    	//printSolution(flow);
     }
     
     int[][] parseInput(String filename){
-
+    	V = 1000;
     	File file = new File(filename);
     	BufferedReader reader = null;
     	int start = 1;
@@ -145,8 +149,8 @@ class AllPairShortestPath
     	    	String[] line = text.split(",");
     	    	if (line.length == 3){
     	    		V = Integer.parseInt(line[0].trim());
-    	    		sneakyStart = Integer.parseInt(line[1].trim())-1;
-    	    		sneakyEnd = Integer.parseInt(line[2].trim())-1;
+    	    		sneakyStart = Integer.parseInt(line[1].trim());
+    	    		sneakyEnd = Integer.parseInt(line[2].trim());
     	    		// if the parameters were not at the top of the file, close and reopen to return to the beginning
     	    		if (linecount != 0){
     	    			reader.close();
@@ -160,6 +164,8 @@ class AllPairShortestPath
     	    catch(Exception e){
     	    	e.printStackTrace();
     	    }
+    	//used to test different sized matrix's
+    	//V = 2500;
     	    graph = new int [V][V];
     	    try{
         	    String text = null;
@@ -172,10 +178,10 @@ class AllPairShortestPath
     	    		end = Integer.parseInt(line[2].trim())-1;
     	    		weight = Integer.parseInt(line[3].trim());
     	    	}
-        	    if (ed != null && ed.equals("E")){
+        	    if (ed != null && ed.equals("E") && (start < V && start >=0) && (end < V && end >=0)){
         	    	graph[start][end] = weight;
         	    }
-        	    else if (ed != null && ed.equals("F")){
+        	    else if (ed != null && ed.equals("F") && (start < V && start >=0) && (end < V && end >=0)){
         	    	Paths temp = new Paths(start, end, weight);
         	    	tflow.add(temp);
         	    }
@@ -202,41 +208,110 @@ class AllPairShortestPath
     				linked[i][j] = 1;
     		}
     	}
+
         dist = new int[V][V];
         pred = new int[V][V];
         flow = new int[V][V];
         minflow = new int[V][V];
     	maxflow = new int[V][V];
-    	avgflow = new int[V][V];
+    	avgflow = new double[V][V];
     	pathMatrix = new String [V][V];
     	return graph;
     }
-    void printflow(){
-    	printSolution(flow);
+    void printflow(PrintWriter writer){
+    	printSolution(flow, writer);
     }
     
     void generateOutput(int[][] input, int[][] predessor){
-    	int max, min, count;
+    	double count;
+
     	String path = "";
-    	String pathCorrect;
+    	String pathCorrect = "";
     	for (int i = 0; i < input.length; i++){
     		for (int j = 0; j < input.length; j++){
+    	    	int max = 0, min = 0;
+    			count = 1;
+    			path = "";
     			if (i == j)
     				pathMatrix[i][j] = Integer.toString(input[i][j]);
     			else{
-    		    	int current = j-1;
-    		    	int begin = i -1;
-    		    	path += j + ", ";
-    		    	while (pred[begin][current] != i){
-    		    		current = pred[begin][current]-1;
-    		    		path += current + ", "; 
+    				int currentval;
+    		    	int current = j;
+    		    	int begin = i ;
+    		    	int next = j;
+    		    	path += (j+1) + " ,";
+    		    	while (pred[begin][current] != (i+1)){
+    		    		current = pred[begin][current] - 1;
+    		    		currentval = dist[current][next];
+    		    		path += (current + 1) + " ,"; 
+    		    		count++;
+    		    		next = current;
+    		    		if (count == 2 || currentval > max)
+    		    			max = currentval;   		    	
+    		    		if (count == 2 || currentval < min)
+    		    			min = currentval;
     		    	}
-    		    	path += i;
+    		    	path += (i+1);
+		    		current = pred[begin][current] - 1;
+		    		currentval = dist[current][next];
+		    		if (count == 1 || currentval > max)
+		    			max = currentval;   		    	
+		    		if (count == 1 || currentval < min)
+		    			min = currentval;
     			}
     			pathCorrect = new StringBuilder(path).reverse().toString();
+    			pathMatrix[i][j] = pathCorrect;   			
+    			avgflow[i][j] = dist[i][j] / count;
+    			minflow[i][j] = min;
+    			maxflow[i][j] = max;
+    			
     		}
     	}
     } 
+    
+    void printPath(String matr[][], PrintWriter writer)
+    {
+			writer.println("Following matrix shows the shortest " + "path between every pair of vertices");
+			for (int i = 0; i < V; ++i) {
+				for (int j = 0; j < V; ++j) {
+					if (i == j)
+						writer.print(String.format("%20s", Integer.toString(i + 1)));
+					else
+						writer.print(String.format("%20s", matr[i][j]));
+				}
+				writer.println();
+			}
+    }
+    
+    void printavg(double matr[][], PrintWriter writer)
+    {
+        writer.println("Following matrix shows the average "+
+                         "distances, per edge, between every pair of vertices");
+        for (int i=0; i<V; ++i)
+        {
+            for (int j=0; j<V; ++j)
+            {
+            	if (i == j)
+            		writer.print(String.format("%20s", Integer.toString((0))));
+            	else
+            		writer.print(String.format("%20s", Math.round(matr[i][j]*100.0)/100.0));
+            }
+            writer.println();
+        }
+    }
+    
+    void printStackToFile(PrintWriter writer, Stack pathStack)
+    {
+    	writer.print("[");
+    		while(pathStack.size() > 0){
+    			writer.print(pathStack.pop());
+    			if (pathStack.size() != 0)
+    				writer.print(", ");
+    		}
+    		writer.print("]");
+			writer.flush();
+
+    }
 
 	public static void main(String[] args) {
 		/*
@@ -247,19 +322,52 @@ class AllPairShortestPath
                           {INF, 1, 6, 4, 0}
                         };
         */
-        ArrayList testFlow = new ArrayList();
-        AllPairShortestPath a = new AllPairShortestPath();
-        int graph[][] = a.parseInput("sneakypathinput.txt");
-        // Print the solution
-        a.floydWarshall(graph);
-        System.out.println("shortest path is as follows:  ");
-        ArrayList thePath = a.giveMeThePath(6, 1);
-        System.out.println(Arrays.toString(thePath.toArray()));
-        a.parseFlowList();
-        a.printflow();
-        a.floydWarshall(flow);
-        thePath = a.giveMeThePath(2, 1);
-        System.out.println(Arrays.toString(thePath.toArray()));
-
+		// start time
+		long startTime = System.nanoTime();
+		
+    	try{
+    		PrintWriter writer = new PrintWriter(fileExtension + "withfeatures"+".txt", "UTF-8");
+    		Stack thePath;
+			ArrayList testFlow = new ArrayList();
+			AllPairShortestPath a = new AllPairShortestPath();
+			int graph[][] = a.parseInput("sneakypathinput" + fileExtension + ".txt");
+    		writer.println("Calculating sneaky path from " + sneakyStart + " to " + sneakyEnd + ".");
+			// Print the solution
+			a.floydWarshall(graph);
+			//System.out.println("shortest path is as follows:  ");
+			//thePath = a.giveMeThePath(6, 1);
+			//System.out.println(Arrays.toString(thePath.toArray()));
+			a.parseFlowList();
+			a.printflow(writer);
+			a.floydWarshall(flow);
+			//thePath = a.giveMeThePath(2, 1);
+			//System.out.println(Arrays.toString(thePath.toArray()));
+			a.generateOutput(flow, pred);
+			a.printPath(pathMatrix, writer);
+			a.printavg(avgflow, writer);
+			a.printSolution(maxflow, writer);
+			a.printSolution(minflow, writer);
+			// end time
+			long endTime = System.nanoTime();
+			//System.out.println("Computation took " + ((endTime - startTime) / 1000000) + " milliseconds");
+			thePath = (a.giveMeThePath(sneakyStart, sneakyEnd));
+			writer.println();
+			writer.println("Here is that sneakypath.");
+			a.printStackToFile(writer, thePath);
+			writer.println();
+			writer.println();
+			writer.println("The edge with the lowest number of other cars in the sneaky path is.");
+			writer.println(minflow[sneakyStart-1][sneakyEnd-1]);
+			writer.println();
+			writer.println("The edge with the highest number of other cars in the sneaky path is.");
+			writer.println(maxflow[sneakyStart-1][sneakyEnd-1]);
+			writer.println();
+			writer.println("The average number of other cars on the sneaky path is.");
+			writer.println(avgflow[sneakyStart-1][sneakyEnd-1]);
+			writer.flush();			writer.close();
+    	}
+    	catch(Exception x){
+    		x.printStackTrace();
+    	}
 	}
 }
